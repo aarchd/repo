@@ -1,0 +1,54 @@
+name: Update Packages Repository
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  update-repo:
+    runs-on: ubuntu-latest
+    container:
+     image: archlinux
+     options: --privileged
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Import GPG key and setup gpg
+        env:
+          GPG_TTY: $(tty)
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_PRIVATE_KEY" | gpg --import --batch
+          echo "allow-preset-passphrase" > ~/.gnupg/gpg-agent.conf
+          echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+          echo "no-tty" >> ~/.gnupg/gpg.conf
+          gpg-connect-agent reloadagent /bye
+          KEYGRIP=$(gpg --list-secret-keys --with-keygrip --with-colons | awk -F: '/^grp/ {print $10; exit}')
+          echo "$GPG_PASSPHRASE" | /usr/lib/gnupg/gpg-preset-passphrase --preset "$KEYGRIP"
+
+      - name: repo-add
+        env:
+          GNUPGHOME: /github/home/.gnupg
+        run: |
+          mkdir -p /public/repo/
+          repo-add -ns /public/repo/aarch0.db.tar.gz PKGS/*.zst
+          mv PKGS/* /public/repo/
+          mv CNAME /public/
+
+      - name: Push public/ to gh-pages branch
+        run: |
+          git config --global --add safe.directory .
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages || git checkout --orphan gh-pages
+          git checkout gh-pages || git checkout --orphan gh-pages
+          git rm -rf . || true
+          cp -r /public/* .
+          git add -A -v
+          git commit --amend -m "deploy: ${{ github.sha }}"
+          git push origin gh-pages --force
+                
+
