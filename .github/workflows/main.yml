@@ -38,7 +38,7 @@ jobs:
           GNUPGHOME: /github/home/.gnupg
         run: |
           mkdir -p /public/repo/
-          repo-add -ns /public/repo/aarch0.db.tar.gz PKGS/*.zst
+          repo-add -ns /public/repo/aarchd.db.tar.gz PKGS/*.zst
           mv PKGS/* /public/repo/
           mv CNAME /public/
 
