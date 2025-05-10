@@ -13,7 +13,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Install git
+        run: pacman -Sy git --noconfirm --needed
+
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Import GPG key and setup gpg
         env:
@@ -50,5 +54,3 @@ jobs:
           git add -A -v
           git commit --amend -m "deploy: ${{ github.sha }}"
           git push origin gh-pages --force
-                
-
