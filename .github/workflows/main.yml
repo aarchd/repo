@@ -19,6 +19,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Gen index.html
+        run: |
+          ./gen-index.sh
+          mkdir -p /public/repo/
+          mv index.html /public/repo/
+
       - name: Import GPG key and setup gpg
         env:
           GPG_TTY: $(tty)
@@ -37,7 +43,6 @@ jobs:
         env:
           GNUPGHOME: /github/home/.gnupg
         run: |
-          mkdir -p /public/repo/
           repo-add -ns /public/repo/aarchd.db.tar.gz PKGS/*.zst
           mv PKGS/* /public/repo/
           mv CNAME /public/
