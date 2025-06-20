@@ -15,7 +15,9 @@ jobs:
     steps:
       - name: Setup
         run: |
-          pacman -Sy git namcap libarchive --noconfirm --needed
+          mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
+          echo "Server = http://ca.us.mirror.archlinuxarm.org/aarch64/\$repo" | tee "/etc/pacman.d/mirrorlist"
+          pacman -Syyu git namcap libarchive --noconfirm --needed
           pacman-key --init
           pacman-key --populate archlinuxarm
           pacman-key --recv-key 6290731A5B773E16 --keyserver keyserver.ubuntu.com
@@ -28,7 +30,12 @@ jobs:
         run: |
           cd PKGS/
           for pkg in *.pkg.tar.zst; do
+            echo ""
             echo -e "\033[1;34m=====================================\033[0m"
+            if [[ "$pkg" == *adaptation-hybris* ]]; then
+              echo -e "\033[1;33mSkipping package (adaptation-hybris match):\033[0m $pkg"
+              continue
+            fi
             echo -e "\033[1;32mInstalling:\033[0m $pkg"
             pacman -U --noconfirm "$pkg"
             echo -e "\033[1;34m=====================================\033[0m"
@@ -37,7 +44,13 @@ jobs:
             namcap -e shebangdepends,elfgnurelro,elfnoshstk "$pkg"
             echo -e "\033[1;34m=====================================\033[0m"
             echo -e "\033[1;32mRemoving:\033[0m $pkg"
-            pacman -Rns --noconfirm "$(bsdtar -xOf "$pkg" .PKGINFO | grep pkgname | cut -d' ' -f3)"
-            echo -e "\033[1;34m=====================================\033[0m"
+            pkgname="$(bsdtar -xOf "$pkg" .PKGINFO | grep pkgname | cut -d' ' -f3)"
+            if [[ "$pkgname" != "aarchd-keyring" && "$pkgname" != "aarchd-mirrorlist" && "$pkgname" != "pacman" ]]; then
+              echo -e "\033[1;34m=====================================\033[0m"
+              echo -e "\033[1;32mRemoving:\033[0m $pkgname"
+              pacman -Rns --noconfirm "$pkgname"
+            else
+              echo -e "\033[1;33mSkipping removal of protected package:\033[0m $pkgname"
+            fi
             echo ""
           done
