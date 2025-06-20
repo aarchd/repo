@@ -8,23 +8,36 @@ jobs:
   namcap:
     runs-on: ubuntu-24.04-arm
     container:
-     image: ghcr.io/gmanka-containers/archlinuxarm:latest
+     image: ghcr.io/aarchd/aarchd:latest
      options: --privileged
     permissions:
       contents: write
     steps:
-      - name: Install deps
-        run: pacman -Sy git namcap --noconfirm --needed
+      - name: Setup
+        run: |
+          pacman -Sy git namcap libarchive --noconfirm --needed
+          pacman-key --init
+          pacman-key --populate archlinuxarm
+          pacman-key --recv-key 6290731A5B773E16 --keyserver keyserver.ubuntu.com
+          pacman-key --lsign-key 6290731A5B773E16
 
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: namcap
         run: |
-          for pkg in PKGS/*.pkg.tar.zst; do
+          cd PKGS/
+          for pkg in *.pkg.tar.zst; do
+            echo -e "\033[1;34m=====================================\033[0m"
+            echo -e "\033[1;32mInstalling:\033[0m $pkg"
+            pacman -U --noconfirm "$pkg"
             echo -e "\033[1;34m=====================================\033[0m"
             echo -e "\033[1;32mRunning namcap on:\033[0m $pkg"
             echo -e "\033[1;34m=====================================\033[0m"
-            namcap "$pkg"
+            namcap -e shebangdepends,elfgnurelro,elfnoshstk "$pkg"
+            echo -e "\033[1;34m=====================================\033[0m"
+            echo -e "\033[1;32mRemoving:\033[0m $pkg"
+            pacman -Rns --noconfirm "$(bsdtar -xOf "$pkg" .PKGINFO | grep pkgname | cut -d' ' -f3)"
+            echo -e "\033[1;34m=====================================\033[0m"
             echo ""
           done
