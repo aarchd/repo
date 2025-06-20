@@ -1,0 +1,30 @@
+name: namcap
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  namcap:
+    runs-on: ubuntu-24.04-arm
+    container:
+     image: ghcr.io/gmanka-containers/archlinuxarm:latest
+     options: --privileged
+    permissions:
+      contents: write
+    steps:
+      - name: Install deps
+        run: pacman -Sy git namcap --noconfirm --needed
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: namcap
+        run: |
+          for pkg in PKGS/*.pkg.tar.zst; do
+            echo -e "\033[1;34m=====================================\033[0m"
+            echo -e "\033[1;32mRunning namcap on:\033[0m $pkg"
+            echo -e "\033[1;34m=====================================\033[0m"
+            namcap "$pkg"
+            echo ""
+          done
