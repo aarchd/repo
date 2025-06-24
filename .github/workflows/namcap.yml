@@ -44,7 +44,7 @@ jobs:
             echo -e "\033[1;34m=====================================\033[0m"
             echo -e "\033[1;32mRemoving:\033[0m $pkg"
             pkgname="$(bsdtar -xOf "$pkg" .PKGINFO | grep pkgname | cut -d' ' -f3)"
-            if [[ "$pkgname" != "aarchd-keyring" && "$pkgname" != "aarchd-mirrorlist" && "$pkgname" != "pacman" ]]; then
+            if [[ "$pkgname" != "aarchd-keyring" && "$pkgname" != "aarchd-mirrorlist" && "$pkgname" != "pacman" && "$pkgname" != "filesystem" ]]; then
               echo -e "\033[1;34m=====================================\033[0m"
               echo -e "\033[1;32mRemoving:\033[0m $pkgname"
               pacman -Rns --noconfirm "$pkgname"
