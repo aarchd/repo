@@ -18,6 +18,8 @@ jobs:
           mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.bak
           echo "Server = http://ca.us.mirror.archlinuxarm.org/aarch64/\$repo" | tee "/etc/pacman.d/mirrorlist"
           pacman -Syyu git namcap libarchive --noconfirm --needed
+          sed -i 's/libc6,x86-64/libc6,AArch64/g' /usr/lib/python3.13/site-packages/Namcap/rules/sodepends.py
+          sed -i 's/x86-64/aarch64/g' /usr/lib/python3.13/site-packages/Namcap/rules/sodepends.py
 
       - name: Checkout
         uses: actions/checkout@v4
