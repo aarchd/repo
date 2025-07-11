@@ -37,13 +37,15 @@ cat <<EOF > "$OUTPUT"
 EOF
 
 for pkg in "$PKG_DIR"/*.pkg.tar.zst; do
-  base=$(basename "$pkg" .pkg.tar.zst)
-  version=$(echo "$base" | rev | cut -d- -f1-3 | rev)
-  name=${base%-$version}
+  read name version < <(bsdtar -xOf "$pkg" .PKGINFO | awk -F ' = ' '
+    /^pkgname =/ { n = $2 }
+    /^pkgver =/  { v = $2 }
+    END { print n, v }
+  ')
 
   cat <<EOF >> "$OUTPUT"
         <tr class="even:bg-gray-700 hover:bg-gray-600 text-sm sm:text-base">
-          <td class="px-4 sm:px-8 py-2 sm:py-4"><a class="text-red-400 hover:underline" href="${BASE_URL}/${base}.pkg.tar.zst">${name}</a></td>
+          <td class="px-4 sm:px-8 py-2 sm:py-4"><a class="text-red-400 hover:underline" href="${BASE_URL}/${pkg}">${name}</a></td>
           <td class="px-4 sm:px-8 py-2 sm:py-4">${version}</td>
         </tr>
 EOF
